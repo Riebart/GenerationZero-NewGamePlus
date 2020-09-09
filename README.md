@@ -16,3 +16,39 @@ cat savegame.txt | sed -n '/CompletionState:/{N;s/\n//;s/\r//;p}' | tr -s ' ' | 
 ```
   
   - The basic idea is to reset every `CompletionState` value to 0. This is kind of what a fresh start looks like.
+
+## Building on Ubuntu 20
+
+### Setting up `deca`
+
+```bash
+apt update
+apt install build-essential git python3-pip python3-numpy python3-matplotlib
+git clone https://github.com/kk49/deca.git
+cd deca
+pip3 install -r <(cat requirements.txt | cut -d '=' -f1)
+pip3 install zugbruecke
+```
+
+### An updated `process_adf.py`
+
+```python
+import sys
+from deca.file import ArchiveFile
+from deca.ff_adf import Adf
+
+
+class FakeVfs:
+    def hash_string_match(self, hash32=None, hash48=None, hash64=None):
+        return []
+    def lookup_equipment_from_hash(self, hash):
+        return None
+
+in_file = sys.argv[1]
+
+obj = Adf()
+with ArchiveFile(open(in_file, 'rb')) as f:
+    obj.deserialize(f)
+
+print(obj.dump_to_string(FakeVfs()))
+```
