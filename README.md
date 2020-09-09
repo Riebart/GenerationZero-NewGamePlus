@@ -12,7 +12,15 @@ To test this out:
 - Here's some bash that'll eat that text output, and then overwrite the relevant parts of your savegame.
 
 ```bash
-cat savegame.txt | sed -n '/CompletionState:/{N;s/\n//;s/\r//;p}' | tr -s ' ' | grep "CompletionState:" | sed 's/^.*Data Offset: \([0-9]*\)[^0-9].*$/\1/' | while read offset; do dd if=/dev/zero of=savegame.reset bs=1 count=1 conv=notrunc seek=$offset 2>/dev/null >/dev/null; echo "$offset"; done | pv -l -s 700 > /dev/null
+cat savegame.txt | \
+  sed -n '/CompletionState:/{N;s/\n//;s/\r//;p}' | \
+  tr -s ' ' | grep "CompletionState:" | \
+  sed 's/^.*Data Offset: \([0-9]*\)[^0-9].*$/\1/' | \
+  while read offset
+  do
+    dd if=/dev/zero of=savegame.reset bs=1 count=1 conv=notrunc seek=$offset 2>/dev/null >/dev/null
+    echo "$offset"
+  done | pv -l -s 700 > /dev/null
 ```
   
   - The basic idea is to reset every `CompletionState` value to 0. This is kind of what a fresh start looks like.
@@ -23,7 +31,7 @@ cat savegame.txt | sed -n '/CompletionState:/{N;s/\n//;s/\r//;p}' | tr -s ' ' | 
 
 ```bash
 apt update
-apt install build-essential git python3-pip python3-numpy python3-matplotlib
+apt install -y build-essential git python3-pip python3-numpy python3-matplotlib pv
 git clone https://github.com/kk49/deca.git
 cd deca
 pip3 install -r <(cat requirements.txt | cut -d '=' -f1)
@@ -51,4 +59,20 @@ with ArchiveFile(open(in_file, 'rb')) as f:
     obj.deserialize(f)
 
 print(obj.dump_to_string(FakeVfs()))
+```
+
+### Resetting mission progress
+
+```bash
+time python3 process_adf.py ~/savegame > ~/savegame.txt
+cp ~/savegame ~/savegame.reset
+cat ~/savegame.txt | \
+  sed -n '/CompletionState:/{N;s/\n//;s/\r//;p}' | \
+  tr -s ' ' | grep "CompletionState:" | \
+  sed 's/^.*Data Offset: \([0-9]*\)[^0-9].*$/\1/' | \
+  while read offset
+  do
+    dd if=/dev/zero of=~/savegame.reset bs=1 count=1 conv=notrunc seek=$offset 2>/dev/null >/dev/null
+    echo "$offset"
+  done | pv -l -s 2900 > /dev/null
 ```
