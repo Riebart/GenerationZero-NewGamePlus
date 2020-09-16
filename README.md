@@ -31,7 +31,7 @@ cat savegame.txt | \
 
 ```bash
 apt update
-apt install -y build-essential git python3-pip python3-numpy python3-matplotlib pv
+DEBIAN_FRONTEND=noninteractive apt install -y build-essential git python3-pip python3-numpy python3-matplotlib pv
 git clone https://github.com/kk49/deca.git
 cd deca
 pip3 install -r <(cat requirements.txt | cut -d '=' -f1)
